@@ -1,0 +1,24 @@
+@media(max-width:768px){
+
+    .title-box h1{
+        font-size:1.5rem;
+    }
+
+    .question-box{
+        width:90%;
+        padding:20px;
+    }
+
+    .answers{
+        grid-template-columns:1fr;
+    }
+
+    .alien{
+        font-size:5rem;
+    }
+
+    .earth{
+        font-size:6rem;
+    }
+
+}
