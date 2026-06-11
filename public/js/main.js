@@ -1,3 +1,5 @@
-// Show login modal on load, then start the game
-showAuthModal("login");
+const existingToken = localStorage.getItem("mc_token");
+if (!existingToken) {
+    showAuthModal("login");
+}
 loadQuestion();
