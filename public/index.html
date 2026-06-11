@@ -34,10 +34,15 @@
     <!-- Main Game -->
     <main class="game-container">
 
-        <!-- Alien Zone (3D canvas) -->
-        <section class="alien-zone">
-            <canvas id="alienCanvas" width="220" height="220"></canvas>
-        </section>
+     <!-- Battle Zone -->
+        <div class="battle-zone">
+            <section class="alien-zone">
+                <canvas id="alienCanvas" width="220" height="220"></canvas>
+            </section>
+            <section class="earth-zone">
+                <canvas id="earthCanvas" width="220" height="220"></canvas>
+            </section>
+        </div>
 
         <!-- Question Area -->
         <section class="question-area">
@@ -52,10 +57,7 @@
             </div>
         </section>
 
-        <!-- Earth Zone (3D canvas) -->
-        <section class="earth-zone">
-            <canvas id="earthCanvas" width="220" height="220"></canvas>
-        </section>
+       
 
     </main>
 

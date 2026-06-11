@@ -79,10 +79,9 @@ body{
 .game-container{
     height:calc(100vh - 80px);
     display:flex;
-    flex-direction:row;
-    align-items:center;
+    flex-direction:column;
     justify-content:space-between;
-    padding: 0 40px;
+    padding: 10px 40px;
 }
 
 /* Alien */
@@ -312,18 +311,25 @@ body{
     transition: filter 0.3s;
 }
 
+.battle-zone {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    flex: 1;
+    padding: 0 20px;
+}
+
 .alien-zone {
     display: flex;
     justify-content: center;
     align-items: center;
-    flex: 1;
 }
 
 .earth-zone {
     display: flex;
     justify-content: center;
     align-items: center;
-    flex: 1;
 }
 /* Remove old emoji styles */
 .alien, .earth {
