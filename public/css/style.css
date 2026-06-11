@@ -288,3 +288,41 @@ body{
 .leaderboard-table tr:first-child td {
     color: #ffd700;
 }
+
+/* ===== 3D CANVASES ===== */
+
+#bgCanvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: -1;
+}
+
+#alienCanvas {
+    display: block;
+    filter: drop-shadow(0 0 20px rgba(0, 255, 204, 0.6));
+    transition: filter 0.3s;
+}
+
+#earthCanvas {
+    display: block;
+    filter: drop-shadow(0 0 25px rgba(0, 136, 255, 0.5));
+    transition: filter 0.3s;
+}
+
+.alien-zone {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.earth-zone {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+/* Remove old emoji styles */
+.alien, .earth {
+    display: none;
+}

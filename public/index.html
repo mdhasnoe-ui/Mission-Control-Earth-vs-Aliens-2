@@ -3,95 +3,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Mission Control: Earth vs. Aliens</title>
-
-    <!-- CSS -->
     <link rel="stylesheet" href="public/css/style.css">
     <link rel="stylesheet" href="public/css/animations.css">
     <link rel="stylesheet" href="public/css/responsive.css">
-
-    <!-- Google Font -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
-
 <body>
 
-    <!-- Animated Background -->
-    <div class="stars"></div>
+    <!-- 3D Background Canvas -->
+    <canvas id="bgCanvas"></canvas>
 
     <!-- Top HUD -->
     <header class="top-bar">
-
         <div class="hud-box">
             <h3>SCORE</h3>
             <p id="score">0</p>
         </div>
-
         <div class="title-box">
             <h1>🚀 Mission Control</h1>
             <h2>Earth vs. Aliens</h2>
         </div>
-
         <div class="hud-box">
             <h3>EARTH HEALTH</h3>
             <p id="health">100%</p>
         </div>
-
     </header>
 
     <!-- Main Game -->
     <main class="game-container">
 
-        <!-- Alien Zone -->
+        <!-- Alien Zone (3D canvas) -->
         <section class="alien-zone">
-
-            <div class="alien" id="alienShip">
-                👾
-            </div>
-
+            <canvas id="alienCanvas" width="220" height="220"></canvas>
         </section>
 
         <!-- Question Area -->
         <section class="question-area">
-
             <div class="question-box">
-
-                <h2 id="question">
-                    Which planet is known as the Red Planet?
-                </h2>
-
+                <h2 id="question">Which planet is known as the Red Planet?</h2>
                 <div class="answers">
-
-                    <button class="answer-btn">
-                        Mars
-                    </button>
-
-                    <button class="answer-btn">
-                        Venus
-                    </button>
-
-                    <button class="answer-btn">
-                        Jupiter
-                    </button>
-
-                    <button class="answer-btn">
-                        Mercury
-                    </button>
-
+                    <button class="answer-btn">Mars</button>
+                    <button class="answer-btn">Venus</button>
+                    <button class="answer-btn">Jupiter</button>
+                    <button class="answer-btn">Mercury</button>
                 </div>
-
             </div>
-
         </section>
 
-        <!-- Earth -->
+        <!-- Earth Zone (3D canvas) -->
         <section class="earth-zone">
-
-            <div class="earth">
-                🌍
-            </div>
-
+            <canvas id="earthCanvas" width="220" height="220"></canvas>
         </section>
 
     </main>
@@ -100,7 +63,7 @@
     <script src="public/js/questions.js"></script>
     <script src="public/js/game.js"></script>
     <script src="public/js/ui.js"></script>
+    <script src="public/js/3d.js"></script>
     <script src="public/js/main.js"></script>
-
 </body>
 </html>
