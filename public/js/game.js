@@ -9,22 +9,16 @@ function checkAnswer(selectedIndex) {
 
     if (selectedIndex === correctAnswer) {
         score += 100;
-        alienPosition -= 40;
-     
-        if (window.moveAlienShip) window.moveAlienShip(1);
+        if (window.moveAlienShip) window.moveAlienShip(-1); // away from earth
         answerButtons[selectedIndex].classList.add("correct");
-        // Shield flash on earth
         document.getElementById("earthCanvas").style.filter = "drop-shadow(0 0 20px #00ffcc)";
         setTimeout(() => { document.getElementById("earthCanvas").style.filter = ""; }, 600);
     } else {
         health -= 20;
-        alienPosition += 40;
-        
-        if (window.moveAlienShip) window.moveAlienShip(-1);
+        if (window.moveAlienShip) window.moveAlienShip(1); // toward earth
         if (window.shakeEarth) window.shakeEarth();
         answerButtons[selectedIndex].classList.add("wrong");
         answerButtons[correctAnswer].classList.add("correct");
-        // Red flash
         document.getElementById("earthCanvas").style.filter = "drop-shadow(0 0 20px #ff0044)";
         setTimeout(() => { document.getElementById("earthCanvas").style.filter = ""; }, 600);
     }
@@ -56,9 +50,12 @@ async function endGame() {
     rb.textContent = "🔄 Play Again"; rb.className = "answer-btn";
     rb.style.marginTop = "8px"; rb.onclick = () => location.reload(); d.appendChild(rb);
 
-    const lo = document.createElement("button");
-    lo.textContent = "🚪 Logout"; lo.className = "answer-btn";
-    lo.style.marginTop = "8px"; lo.style.borderColor = "#ff4466"; lo.style.color = "#ff4466";
-    lo.onclick = () => { localStorage.removeItem("mc_token"); localStorage.removeItem("mc_username"); location.reload(); };
-    d.appendChild(lo);
+    const token = localStorage.getItem("mc_token");
+    if (token) {
+        const lo = document.createElement("button");
+        lo.textContent = "🚪 Logout"; lo.className = "answer-btn";
+        lo.style.marginTop = "8px"; lo.style.borderColor = "#ff4466"; lo.style.color = "#ff4466";
+        lo.onclick = () => { localStorage.removeItem("mc_token"); localStorage.removeItem("mc_username"); location.reload(); };
+        d.appendChild(lo);
+    }
 }
