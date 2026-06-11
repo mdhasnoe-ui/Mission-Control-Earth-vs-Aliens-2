@@ -108,7 +108,7 @@ body{
 }
 
 .question-box{
-    width:65%;
+    width:55%;
 
     background:rgba(255,255,255,0.05);
 
@@ -116,7 +116,7 @@ body{
 
     border-radius:20px;
 
-    padding:40px;
+    padding:20px;
 
     backdrop-filter:blur(10px);
 
@@ -126,7 +126,7 @@ body{
 }
 
 .question-box h2{
-    margin-bottom:35px;
+    margin-bottom:15px;
 
     font-size:1.5rem;
 }
