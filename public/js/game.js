@@ -10,7 +10,7 @@ function checkAnswer(selectedIndex) {
     if (selectedIndex === correctAnswer) {
         score += 100;
         alienPosition -= 40;
-        alienShip.style.transform = `translateY(${alienPosition}px)`;
+     
         if (window.moveAlienShip) window.moveAlienShip(-1);
         answerButtons[selectedIndex].classList.add("correct");
         // Shield flash on earth
@@ -19,7 +19,7 @@ function checkAnswer(selectedIndex) {
     } else {
         health -= 20;
         alienPosition += 40;
-        alienShip.style.transform = `translateY(${alienPosition}px)`;
+        
         if (window.moveAlienShip) window.moveAlienShip(1);
         if (window.shakeEarth) window.shakeEarth();
         answerButtons[selectedIndex].classList.add("wrong");
