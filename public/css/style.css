@@ -108,23 +108,30 @@ body{
     flex: 2;
 }
 
-.question-box{
-    width:55%;
-
-    background:rgba(255,255,255,0.05);
-
-    border:2px solid cyan;
-
-    border-radius:20px;
-
-    padding:20px;
-
-    backdrop-filter:blur(10px);
-
-    box-shadow:0 0 20px rgba(0,255,255,0.3);
-
-    text-align:center;
+.question-box {
+    width: 60%;
+    background: linear-gradient(135deg, rgba(0,255,255,0.1), rgba(0,0,50,0.6));
+    border: 2px solid #00e5ff;
+    border-radius: 16px;
+    padding: 25px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 0 25px rgba(0,229,255,0.4), inset 0 0 10px rgba(0,229,255,0.2);
+    text-align: center;
+    transform: perspective(800px) rotateX(5deg);
+    animation: glowBox 3s infinite alternate;
 }
+
+@keyframes glowBox {
+    from { box-shadow: 0 0 15px rgba(0,229,255,0.3); }
+    to   { box-shadow: 0 0 35px rgba(0,229,255,0.6); }
+}
+
+.question-box h2 {
+    font-size: 1.6rem;
+    color: #00e5ff;
+    text-shadow: 0 0 10px #00e5ff;
+}
+
 
 .question-box h2{
     margin-bottom:15px;
