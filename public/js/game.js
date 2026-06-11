@@ -11,7 +11,7 @@ function checkAnswer(selectedIndex) {
         score += 100;
         alienPosition -= 40;
      
-        if (window.moveAlienShip) window.moveAlienShip(-1);
+        if (window.moveAlienShip) window.moveAlienShip(1);
         answerButtons[selectedIndex].classList.add("correct");
         // Shield flash on earth
         document.getElementById("earthCanvas").style.filter = "drop-shadow(0 0 20px #00ffcc)";
@@ -20,7 +20,7 @@ function checkAnswer(selectedIndex) {
         health -= 20;
         alienPosition += 40;
         
-        if (window.moveAlienShip) window.moveAlienShip(1);
+        if (window.moveAlienShip) window.moveAlienShip(-1);
         if (window.shakeEarth) window.shakeEarth();
         answerButtons[selectedIndex].classList.add("wrong");
         answerButtons[correctAnswer].classList.add("correct");
