@@ -5,11 +5,11 @@ let alienLeft = 8;
 let timerInterval = null;
 let timeLeft = 15;
 let currentDifficulty = "easy";
+let gameOver = false;
 
 function startGame(difficulty) {
     currentDifficulty = difficulty;
     const qs = initQuestions(difficulty);
-    // Override global questions array
     window.questions = qs;
 
     document.getElementById("difficultyScreen").style.display = "none";
@@ -17,20 +17,14 @@ function startGame(difficulty) {
     document.getElementById("battleScene").style.display = "block";
     document.getElementById("questionArea").style.display = "flex";
 
-    // Show welcome user
     const username = localStorage.getItem("mc_username");
     const welcomeEl = document.getElementById("welcomeUser");
-    if (username) {
-        welcomeEl.textContent = "👋 " + username;
-    } else {
-        welcomeEl.textContent = "Playing as Guest";
-    }
+    if (username) welcomeEl.textContent = "👋 " + username;
+    else welcomeEl.textContent = "Playing as Guest";
 
-    // Set timer based on difficulty
     if (difficulty === "easy") timeLeft = 20;
     else if (difficulty === "medium") timeLeft = 15;
     else timeLeft = 10;
-
     window._baseTime = timeLeft;
 
     loadQuestion();
@@ -41,15 +35,10 @@ function startTimer() {
     clearInterval(timerInterval);
     timeLeft = window._baseTime;
     updateTimerUI();
-
     timerInterval = setInterval(() => {
         timeLeft--;
         updateTimerUI();
-        if (timeLeft <= 0) {
-            clearInterval(timerInterval);
-            // Time's up - treat as wrong answer
-            timeUp();
-        }
+        if (timeLeft <= 0) { clearInterval(timerInterval); timeUp(); }
     }, 1000);
 }
 
@@ -64,66 +53,81 @@ function updateTimerUI() {
     }
 }
 
-function timeUp() {
-    health -= 20;
-    alienLeft = Math.min(72, alienLeft + 12);
-    document.getElementById("alienShipWrapper").style.left = alienLeft + "%";
+function takeDamage() {
+    health = Math.max(0, health - 20);
+    updateHUD();
+    if (health <= 0) {
+        clearInterval(timerInterval);
+        answerButtons.forEach(b => b.disabled = true);
+        triggerEarthDestroyed();
+        return true; // game over
+    }
+    return false;
+}
 
-    // Find correct answer and highlight it
+function timeUp() {
+    if (gameOver) return;
     const correctAnswer = window.questions[currentQuestion].correct;
     answerButtons.forEach(b => b.disabled = true);
     answerButtons[correctAnswer].classList.add("correct");
 
+    alienLeft = Math.min(72, alienLeft + 12);
+    document.getElementById("alienShipWrapper").style.left = alienLeft + "%";
+
+    const isOver = takeDamage();
+    if (isOver) return;
+
     triggerExplosion();
-    updateHUD();
 
     setTimeout(() => {
         answerButtons.forEach(b => { b.disabled = false; b.classList.remove("correct", "wrong"); });
         currentQuestion++;
-        if (currentQuestion < window.questions.length) {
-            loadQuestion();
-            startTimer();
-        } else {
-            endGame();
-        }
+        if (currentQuestion < window.questions.length) { loadQuestion(); startTimer(); }
+        else { endGame(); }
     }, 1800);
 }
 
 function checkAnswer(selectedIndex) {
+    if (gameOver) return;
     clearInterval(timerInterval);
     const correctAnswer = window.questions[currentQuestion].correct;
     answerButtons.forEach(b => { b.disabled = true; });
 
     if (selectedIndex === correctAnswer) {
-        score += 100 + (timeLeft * 5); // bonus points for speed
+        score += 100 + (timeLeft * 5);
         alienLeft = Math.max(5, alienLeft - 12);
         document.getElementById("alienShipWrapper").style.left = alienLeft + "%";
         answerButtons[selectedIndex].classList.add("correct");
         playSound("correct");
         document.getElementById("earthCanvas").style.filter = "drop-shadow(0 0 30px #00ffcc) drop-shadow(0 0 60px #00ffcc)";
         setTimeout(() => { document.getElementById("earthCanvas").style.filter = "drop-shadow(0 0 25px rgba(30,144,255,0.7))"; }, 700);
+        updateHUD();
+
+        setTimeout(() => {
+            answerButtons.forEach(b => { b.disabled = false; b.classList.remove("correct", "wrong"); });
+            currentQuestion++;
+            if (currentQuestion < window.questions.length) { loadQuestion(); startTimer(); }
+            else { endGame(); }
+        }, 1800);
     } else {
-        health -= 20;
         alienLeft = Math.min(72, alienLeft + 12);
         document.getElementById("alienShipWrapper").style.left = alienLeft + "%";
         answerButtons[selectedIndex].classList.add("wrong");
         answerButtons[correctAnswer].classList.add("correct");
         playSound("wrong");
+
+        const isOver = takeDamage();
+        if (isOver) return;
+
         triggerExplosion();
+
+        setTimeout(() => {
+            answerButtons.forEach(b => { b.disabled = false; b.classList.remove("correct", "wrong"); });
+            currentQuestion++;
+            if (currentQuestion < window.questions.length) { loadQuestion(); startTimer(); }
+            else { endGame(); }
+        }, 1800);
     }
-
-    updateHUD();
-
-    setTimeout(() => {
-        answerButtons.forEach(b => { b.disabled = false; b.classList.remove("correct", "wrong"); });
-        currentQuestion++;
-        if (currentQuestion < window.questions.length) {
-            loadQuestion();
-            startTimer();
-        } else {
-            endGame();
-        }
-    }, 1800);
 }
 
 function triggerExplosion() {
@@ -134,10 +138,55 @@ function triggerExplosion() {
         ring.classList.add("explode");
         playSound("explosion");
         document.getElementById("earthCanvas").style.filter = "drop-shadow(0 0 40px #ff2200) brightness(1.5)";
-        setTimeout(() => {
-            document.getElementById("earthCanvas").style.filter = "drop-shadow(0 0 25px rgba(30,144,255,0.7))";
-        }, 600);
+        setTimeout(() => { document.getElementById("earthCanvas").style.filter = "drop-shadow(0 0 25px rgba(30,144,255,0.7))"; }, 600);
     }, 800);
+}
+
+function triggerEarthDestroyed() {
+    gameOver = true;
+    playSound("explosion");
+
+    // Big explosion on earth
+    const earthWrapper = document.getElementById("earthWrapper");
+    const ring = document.getElementById("explosionRing");
+
+    // Multiple explosion rings
+    for (let i = 0; i < 4; i++) {
+        setTimeout(() => {
+            ring.classList.remove("explode");
+            void ring.offsetWidth;
+            ring.classList.add("explode");
+            playSound("explosion");
+            document.getElementById("earthCanvas").style.filter = `drop-shadow(0 0 ${40+i*20}px #ff2200) brightness(${1.5+i*0.3})`;
+        }, i * 400);
+    }
+
+    // Alien invasion overlay
+    setTimeout(() => {
+        const overlay = document.createElement("div");
+        overlay.id = "invasionOverlay";
+        overlay.style.cssText = `
+            position:fixed; inset:0;
+            background:rgba(255,30,0,0.15);
+            z-index:50;
+            pointer-events:none;
+            animation: invasionFlash 0.5s ease-in-out 3;
+        `;
+        document.body.appendChild(overlay);
+
+        const style = document.createElement("style");
+        style.textContent = `@keyframes invasionFlash { 0%,100%{opacity:0} 50%{opacity:1} }`;
+        document.head.appendChild(style);
+
+        setTimeout(() => { overlay.remove(); }, 1600);
+    }, 600);
+
+    // Move alien all the way to earth
+    document.getElementById("alienShipWrapper").style.left = "72%";
+
+    setTimeout(() => {
+        endGame();
+    }, 2500);
 }
 
 function playSound(type) {
@@ -145,8 +194,7 @@ function playSound(type) {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
+        osc.connect(gain); gain.connect(ctx.destination);
 
         if (type === "correct") {
             osc.frequency.setValueAtTime(523, ctx.currentTime);
@@ -195,24 +243,13 @@ function launchConfetti() {
     const colors = ["#00ffcc", "#ff00ff", "#ffff00", "#00aaff", "#ff6600", "#ffffff"];
     for (let i = 0; i < 80; i++) {
         const p = document.createElement("div");
-        p.style.cssText = `
-            position:fixed;
-            left:${Math.random()*100}%;
-            top:-10px;
-            width:${6+Math.random()*8}px;
-            height:${6+Math.random()*8}px;
-            background:${colors[Math.floor(Math.random()*colors.length)]};
-            border-radius:${Math.random()>0.5?'50%':'2px'};
-            animation: confettiFall ${2+Math.random()*3}s linear ${Math.random()*2}s forwards;
-            z-index:999;
-            pointer-events:none;
-        `;
+        p.style.cssText = `position:fixed;left:${Math.random()*100}%;top:-10px;width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:${Math.random()>0.5?'50%':'2px'};animation:confettiFall ${2+Math.random()*3}s linear ${Math.random()*2}s forwards;z-index:999;pointer-events:none;`;
         container.appendChild(p);
     }
     if (!document.getElementById("confettiStyle")) {
         const style = document.createElement("style");
         style.id = "confettiStyle";
-        style.textContent = `@keyframes confettiFall { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }`;
+        style.textContent = `@keyframes confettiFall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}`;
         document.head.appendChild(style);
     }
     setTimeout(() => { container.innerHTML = ""; }, 6000);
@@ -224,7 +261,6 @@ async function endGame() {
 
     if (health <= 0) {
         questionElement.textContent = "💀 GAME OVER - Earth Was Destroyed";
-        playSound("wrong");
     } else {
         questionElement.textContent = "🚀 VICTORY - Earth Has Been Saved!";
         playSound("victory");
