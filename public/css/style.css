@@ -78,10 +78,11 @@ body{
 
 .game-container{
     height:calc(100vh - 80px);
-
     display:flex;
-    flex-direction:column;
+    flex-direction:row;
+    align-items:center;
     justify-content:space-between;
+    padding: 0 40px;
 }
 
 /* Alien */
@@ -105,6 +106,7 @@ body{
     display:flex;
     justify-content:center;
     align-items:center;
+    flex: 2;
 }
 
 .question-box{
@@ -313,15 +315,16 @@ body{
 .alien-zone {
     display: flex;
     justify-content: center;
-    margin-top: 5px;
+    align-items: center;
+    flex: 1;
 }
 
 .earth-zone {
     display: flex;
     justify-content: center;
-    margin-bottom: 5px;
+    align-items: center;
+    flex: 1;
 }
-
 /* Remove old emoji styles */
 .alien, .earth {
     display: none;
