@@ -7,15 +7,14 @@
     <link rel="stylesheet" href="public/css/style.css">
     <link rel="stylesheet" href="public/css/animations.css">
     <link rel="stylesheet" href="public/css/responsive.css">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-    <!-- 3D Background Canvas -->
     <canvas id="bgCanvas"></canvas>
 
-    <!-- Top HUD -->
+    <!-- HUD -->
     <header class="top-bar">
         <div class="hud-box">
             <h3>SCORE</h3>
@@ -31,37 +30,36 @@
         </div>
     </header>
 
-    <!-- Main Game -->
-    <main class="game-container">
-
-     <!-- Battle Zone -->
-        <div class="battle-zone">
-            <section class="alien-zone">
-                <canvas id="alienCanvas" width="220" height="220"></canvas>
-            </section>
-            <section class="earth-zone">
-                <canvas id="earthCanvas" width="220" height="220"></canvas>
-            </section>
+    <!-- Full screen battle area -->
+    <div class="battle-scene">
+        <!-- Alien ship - moves freely across screen -->
+        <div id="alienShipWrapper">
+            <canvas id="alienCanvas" width="160" height="160"></canvas>
         </div>
 
-        <!-- Question Area -->
-        <section class="question-area">
-            <div class="question-box">
-                <h2 id="question">Which planet is known as the Red Planet?</h2>
-                <div class="answers">
-                    <button class="answer-btn">Mars</button>
-                    <button class="answer-btn">Venus</button>
-                    <button class="answer-btn">Jupiter</button>
-                    <button class="answer-btn">Mercury</button>
-                </div>
+        <!-- Earth - fixed right -->
+        <div id="earthWrapper">
+            <canvas id="earthCanvas" width="180" height="180"></canvas>
+            <div id="explosionRing"></div>
+        </div>
+    </div>
+
+    <!-- Question Box -->
+    <div class="question-area">
+        <div class="question-box">
+            <div class="question-header">
+                <span class="question-number" id="questionNum">01 / 05</span>
             </div>
-        </section>
+            <h2 id="question">Which planet is known as the Red Planet?</h2>
+            <div class="answers">
+                <button class="answer-btn">Mars</button>
+                <button class="answer-btn">Venus</button>
+                <button class="answer-btn">Jupiter</button>
+                <button class="answer-btn">Mercury</button>
+            </div>
+        </div>
+    </div>
 
-       
-
-    </main>
-
-    <!-- JS -->
     <script src="public/js/questions.js"></script>
     <script src="public/js/game.js"></script>
     <script src="public/js/ui.js"></script>

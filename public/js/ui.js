@@ -2,20 +2,26 @@ const questionElement = document.getElementById("question");
 const answerButtons = document.querySelectorAll(".answer-btn");
 const scoreElement = document.getElementById("score");
 const healthElement = document.getElementById("health");
-const alienShip = document.getElementById("alienShip");
+const alienShip = { style: { transform: "" } };
 
 function loadQuestion() {
     const current = questions[currentQuestion];
     questionElement.textContent = current.question;
+    const qNum = document.getElementById("questionNum");
+    if (qNum) qNum.textContent = `${String(currentQuestion+1).padStart(2,'0')} / ${String(questions.length).padStart(2,'0')}`;
     answerButtons.forEach((button, index) => {
         button.textContent = current.answers[index];
         button.onclick = () => checkAnswer(index);
+        button.style.display = "";
     });
 }
 
 function updateHUD() {
     scoreElement.textContent = score;
     healthElement.textContent = `${health}%`;
+    if (health <= 40) healthElement.style.color = "#ff4466";
+    else if (health <= 60) healthElement.style.color = "#ffaa00";
+    else healthElement.style.color = "white";
 }
 
 function showAuthModal(mode = "login") {
@@ -50,10 +56,6 @@ function showAuthModal(mode = "login") {
         e.preventDefault();
         showAuthModal(mode === "login" ? "register" : "login");
     };
-
-    document.getElementById("authUsername").addEventListener("keydown", (e) => {
-        if (e.key === "Enter") handleAuth(mode);
-    });
     document.getElementById("authPassword").addEventListener("keydown", (e) => {
         if (e.key === "Enter") handleAuth(mode);
     });
@@ -63,32 +65,20 @@ async function handleAuth(mode) {
     const username = document.getElementById("authUsername").value.trim();
     const password = document.getElementById("authPassword").value;
     const errorEl = document.getElementById("authError");
-
-    if (!username || !password) {
-        errorEl.textContent = "Please fill in all fields.";
-        return;
-    }
+    if (!username || !password) { errorEl.textContent = "Please fill in all fields."; return; }
 
     const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
-
     try {
         const res = await fetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, password })
         });
-
         const data = await res.json();
-
-        if (!res.ok) {
-            errorEl.textContent = data.message || "Something went wrong.";
-            return;
-        }
-
+        if (!res.ok) { errorEl.textContent = data.message || "Something went wrong."; return; }
         localStorage.setItem("mc_token", data.token);
         localStorage.setItem("mc_username", data.username);
         document.getElementById("authModal").remove();
-
     } catch (err) {
         errorEl.textContent = "Could not connect to server.";
     }
@@ -96,40 +86,25 @@ async function handleAuth(mode) {
 
 async function saveScore(finalScore) {
     const token = localStorage.getItem("mc_token");
-    if (!token) return; // guest, don't save
-
+    if (!token) return;
     try {
         await fetch("/api/scores", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": token
-            },
+            headers: { "Content-Type": "application/json", "Authorization": token },
             body: JSON.stringify({ score: finalScore })
         });
-    } catch (err) {
-        console.log("Could not save score:", err);
-    }
+    } catch (err) { console.log("Could not save score:", err); }
 }
 
 async function showLeaderboard() {
     try {
         const res = await fetch("/api/scores");
         const scores = await res.json();
-
         const existing = document.getElementById("leaderboardModal");
         if (existing) existing.remove();
-
         const rows = scores.length === 0
             ? "<tr><td colspan='3'>No scores yet!</td></tr>"
-            : scores.map((s, i) => `
-                <tr>
-                    <td>${i + 1}</td>
-                    <td>${s.username}</td>
-                    <td>${s.score}</td>
-                </tr>
-            `).join("");
-
+            : scores.map((s, i) => `<tr><td>${i+1}</td><td>${s.username}</td><td>${s.score}</td></tr>`).join("");
         const modal = document.createElement("div");
         modal.id = "leaderboardModal";
         modal.innerHTML = `
@@ -146,8 +121,5 @@ async function showLeaderboard() {
         `;
         document.body.appendChild(modal);
         document.getElementById("closeLeaderboard").onclick = () => modal.remove();
-
-    } catch (err) {
-        console.log("Could not load leaderboard:", err);
-    }
+    } catch (err) { console.log("Could not load leaderboard:", err); }
 }
