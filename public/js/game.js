@@ -1,62 +1,236 @@
 let currentQuestion = 0;
 let score = 0;
 let health = 100;
-let alienLeft = 8; // percentage from left
+let alienLeft = 8;
+let timerInterval = null;
+let timeLeft = 15;
+let currentDifficulty = "easy";
+
+function startGame(difficulty) {
+    currentDifficulty = difficulty;
+    const qs = initQuestions(difficulty);
+    // Override global questions array
+    window.questions = qs;
+
+    document.getElementById("difficultyScreen").style.display = "none";
+    document.getElementById("topBar").style.display = "flex";
+    document.getElementById("battleScene").style.display = "block";
+    document.getElementById("questionArea").style.display = "flex";
+
+    // Show welcome user
+    const username = localStorage.getItem("mc_username");
+    const welcomeEl = document.getElementById("welcomeUser");
+    if (username) {
+        welcomeEl.textContent = "👋 " + username;
+    } else {
+        welcomeEl.textContent = "Playing as Guest";
+    }
+
+    // Set timer based on difficulty
+    if (difficulty === "easy") timeLeft = 20;
+    else if (difficulty === "medium") timeLeft = 15;
+    else timeLeft = 10;
+
+    window._baseTime = timeLeft;
+
+    loadQuestion();
+    startTimer();
+}
+
+function startTimer() {
+    clearInterval(timerInterval);
+    timeLeft = window._baseTime;
+    updateTimerUI();
+
+    timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerUI();
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            // Time's up - treat as wrong answer
+            timeUp();
+        }
+    }, 1000);
+}
+
+function updateTimerUI() {
+    const timerText = document.getElementById("timerText");
+    const timerBar = document.getElementById("timerBar");
+    if (timerText) timerText.textContent = timeLeft;
+    if (timerBar) {
+        const pct = (timeLeft / window._baseTime) * 100;
+        timerBar.style.width = pct + "%";
+        timerBar.style.background = pct > 50 ? "#00ffcc" : pct > 25 ? "#ffaa00" : "#ff3333";
+    }
+}
+
+function timeUp() {
+    health -= 20;
+    alienLeft = Math.min(72, alienLeft + 12);
+    document.getElementById("alienShipWrapper").style.left = alienLeft + "%";
+
+    // Find correct answer and highlight it
+    const correctAnswer = window.questions[currentQuestion].correct;
+    answerButtons.forEach(b => b.disabled = true);
+    answerButtons[correctAnswer].classList.add("correct");
+
+    triggerExplosion();
+    updateHUD();
+
+    setTimeout(() => {
+        answerButtons.forEach(b => { b.disabled = false; b.classList.remove("correct", "wrong"); });
+        currentQuestion++;
+        if (currentQuestion < window.questions.length) {
+            loadQuestion();
+            startTimer();
+        } else {
+            endGame();
+        }
+    }, 1800);
+}
 
 function checkAnswer(selectedIndex) {
-    const correctAnswer = questions[currentQuestion].correct;
+    clearInterval(timerInterval);
+    const correctAnswer = window.questions[currentQuestion].correct;
     answerButtons.forEach(b => { b.disabled = true; });
 
     if (selectedIndex === correctAnswer) {
-        // Correct - move alien LEFT (away from earth)
-        score += 100;
+        score += 100 + (timeLeft * 5); // bonus points for speed
         alienLeft = Math.max(5, alienLeft - 12);
         document.getElementById("alienShipWrapper").style.left = alienLeft + "%";
         answerButtons[selectedIndex].classList.add("correct");
-        // Shield glow on earth
+        playSound("correct");
         document.getElementById("earthCanvas").style.filter = "drop-shadow(0 0 30px #00ffcc) drop-shadow(0 0 60px #00ffcc)";
         setTimeout(() => { document.getElementById("earthCanvas").style.filter = "drop-shadow(0 0 25px rgba(30,144,255,0.7))"; }, 700);
     } else {
-        // Wrong - move alien RIGHT (toward earth) + explosion
         health -= 20;
         alienLeft = Math.min(72, alienLeft + 12);
         document.getElementById("alienShipWrapper").style.left = alienLeft + "%";
         answerButtons[selectedIndex].classList.add("wrong");
         answerButtons[correctAnswer].classList.add("correct");
-
-        // Explosion on earth after ship arrives
-        setTimeout(() => {
-            const ring = document.getElementById("explosionRing");
-            ring.classList.remove("explode");
-            void ring.offsetWidth; // reflow
-            ring.classList.add("explode");
-            document.getElementById("earthCanvas").style.filter = "drop-shadow(0 0 40px #ff2200) brightness(1.5)";
-            setTimeout(() => {
-                document.getElementById("earthCanvas").style.filter = "drop-shadow(0 0 25px rgba(30,144,255,0.7))";
-            }, 600);
-        }, 800);
+        playSound("wrong");
+        triggerExplosion();
     }
-
-    // Update question counter
-    const qNum = document.getElementById("questionNum");
-    if (qNum) qNum.textContent = `${String(currentQuestion+1).padStart(2,'0')} / ${String(questions.length).padStart(2,'0')}`;
 
     updateHUD();
 
     setTimeout(() => {
         answerButtons.forEach(b => { b.disabled = false; b.classList.remove("correct", "wrong"); });
         currentQuestion++;
-        if (currentQuestion < questions.length) { loadQuestion(); } else { endGame(); }
+        if (currentQuestion < window.questions.length) {
+            loadQuestion();
+            startTimer();
+        } else {
+            endGame();
+        }
     }, 1800);
 }
 
+function triggerExplosion() {
+    setTimeout(() => {
+        const ring = document.getElementById("explosionRing");
+        ring.classList.remove("explode");
+        void ring.offsetWidth;
+        ring.classList.add("explode");
+        playSound("explosion");
+        document.getElementById("earthCanvas").style.filter = "drop-shadow(0 0 40px #ff2200) brightness(1.5)";
+        setTimeout(() => {
+            document.getElementById("earthCanvas").style.filter = "drop-shadow(0 0 25px rgba(30,144,255,0.7))";
+        }, 600);
+    }, 800);
+}
+
+function playSound(type) {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === "correct") {
+            osc.frequency.setValueAtTime(523, ctx.currentTime);
+            osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
+            osc.frequency.setValueAtTime(784, ctx.currentTime + 0.2);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+            osc.start(); osc.stop(ctx.currentTime + 0.5);
+        } else if (type === "wrong") {
+            osc.frequency.setValueAtTime(200, ctx.currentTime);
+            osc.frequency.setValueAtTime(150, ctx.currentTime + 0.1);
+            gain.gain.setValueAtTime(0.3, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+            osc.start(); osc.stop(ctx.currentTime + 0.4);
+        } else if (type === "explosion") {
+            const bufferSize = ctx.sampleRate * 0.5;
+            const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+            const source = ctx.createBufferSource();
+            source.buffer = buffer;
+            const filter = ctx.createBiquadFilter();
+            filter.type = "lowpass"; filter.frequency.value = 400;
+            source.connect(filter); filter.connect(gain);
+            gain.gain.setValueAtTime(0.5, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+            source.start(); source.stop(ctx.currentTime + 0.5);
+        } else if (type === "victory") {
+            const notes = [523, 659, 784, 1047];
+            notes.forEach((freq, i) => {
+                const o = ctx.createOscillator();
+                const g = ctx.createGain();
+                o.connect(g); g.connect(ctx.destination);
+                o.frequency.value = freq;
+                g.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.15);
+                g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.4);
+                o.start(ctx.currentTime + i * 0.15);
+                o.stop(ctx.currentTime + i * 0.15 + 0.4);
+            });
+        }
+    } catch(e) {}
+}
+
+function launchConfetti() {
+    const container = document.getElementById("victoryParticles");
+    const colors = ["#00ffcc", "#ff00ff", "#ffff00", "#00aaff", "#ff6600", "#ffffff"];
+    for (let i = 0; i < 80; i++) {
+        const p = document.createElement("div");
+        p.style.cssText = `
+            position:fixed;
+            left:${Math.random()*100}%;
+            top:-10px;
+            width:${6+Math.random()*8}px;
+            height:${6+Math.random()*8}px;
+            background:${colors[Math.floor(Math.random()*colors.length)]};
+            border-radius:${Math.random()>0.5?'50%':'2px'};
+            animation: confettiFall ${2+Math.random()*3}s linear ${Math.random()*2}s forwards;
+            z-index:999;
+            pointer-events:none;
+        `;
+        container.appendChild(p);
+    }
+    if (!document.getElementById("confettiStyle")) {
+        const style = document.createElement("style");
+        style.id = "confettiStyle";
+        style.textContent = `@keyframes confettiFall { 0%{transform:translateY(0) rotate(0deg);opacity:1} 100%{transform:translateY(110vh) rotate(720deg);opacity:0} }`;
+        document.head.appendChild(style);
+    }
+    setTimeout(() => { container.innerHTML = ""; }, 6000);
+}
+
 async function endGame() {
+    clearInterval(timerInterval);
     answerButtons.forEach(b => { b.style.display = "none"; });
+
     if (health <= 0) {
         questionElement.textContent = "💀 GAME OVER - Earth Was Destroyed";
+        playSound("wrong");
     } else {
         questionElement.textContent = "🚀 VICTORY - Earth Has Been Saved!";
+        playSound("victory");
+        launchConfetti();
     }
+
     await saveScore(score);
     const d = document.querySelector(".answers");
     d.style.gridTemplateColumns = "1fr";

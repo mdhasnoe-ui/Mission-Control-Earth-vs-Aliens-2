@@ -14,48 +14,69 @@
 
     <canvas id="bgCanvas"></canvas>
 
+    <!-- Difficulty Screen -->
+    <div id="difficultyScreen" class="diff-screen">
+        <div class="diff-box">
+            <h1>🚀 Mission Control</h1>
+            <h2>Earth vs. Aliens</h2>
+            <p class="diff-subtitle">Choose your difficulty</p>
+            <div class="diff-buttons">
+                <button class="diff-btn easy" onclick="startGame('easy')">🟢 Easy</button>
+                <button class="diff-btn medium" onclick="startGame('medium')">🟡 Medium</button>
+                <button class="diff-btn hard" onclick="startGame('hard')">🔴 Hard</button>
+            </div>
+        </div>
+    </div>
+
     <!-- HUD -->
-    <header class="top-bar">
+    <header class="top-bar" id="topBar" style="display:none">
         <div class="hud-box">
             <h3>SCORE</h3>
             <p id="score">0</p>
         </div>
         <div class="title-box">
             <h1>🚀 Mission Control</h1>
-            <h2>Earth vs. Aliens</h2>
+            <div id="welcomeUser" class="welcome-user"></div>
         </div>
         <div class="hud-box">
             <h3>EARTH HEALTH</h3>
+            <div class="health-bar-wrap">
+                <div class="health-bar" id="healthBar"></div>
+            </div>
             <p id="health">100%</p>
         </div>
     </header>
 
-    <!-- Full screen battle area -->
-    <div class="battle-scene">
-        <!-- Alien ship - moves freely across screen -->
+    <!-- Battle Scene -->
+    <div class="battle-scene" id="battleScene" style="display:none">
         <div id="alienShipWrapper">
             <canvas id="alienCanvas" width="160" height="160"></canvas>
         </div>
-
-        <!-- Earth - fixed right -->
         <div id="earthWrapper">
             <canvas id="earthCanvas" width="180" height="180"></canvas>
             <div id="explosionRing"></div>
         </div>
     </div>
 
+    <!-- Victory particles container -->
+    <div id="victoryParticles"></div>
+
     <!-- Question Box -->
-    <div class="question-area">
+    <div class="question-area" id="questionArea" style="display:none">
         <div class="question-box">
             <div class="question-header">
-                <span class="question-number" id="questionNum">01 / 05</span>
+                <span class="question-number" id="questionNum">01 / 08</span>
+                <div class="timer-wrap">
+                    <div class="timer-bar" id="timerBar"></div>
+                    <span class="timer-text" id="timerText">15</span>
+                </div>
             </div>
-            <h2 id="question">Which planet is known as the Red Planet?</h2>
+            <h2 id="question">Loading...</h2>
             <div class="answers">
-                <button class="answer-btn">Mars</button>
-                <button class="answer-btn">Venus</button>
-                <button class="answer-btn">Jupiter</button>
-                <button class="answer-btn">Mercury</button>
+                <button class="answer-btn">A</button>
+                <button class="answer-btn">B</button>
+                <button class="answer-btn">C</button>
+                <button class="answer-btn">D</button>
             </div>
         </div>
     </div>
