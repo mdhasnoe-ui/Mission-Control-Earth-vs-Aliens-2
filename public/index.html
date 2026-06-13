@@ -11,7 +11,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-
     <canvas id="bgCanvas"></canvas>
 
     <!-- Difficulty Screen -->
@@ -39,7 +38,7 @@
             <div id="welcomeUser" class="welcome-user"></div>
         </div>
         <div class="hud-box">
-            <h3>EARTH HEALTH</h3>
+            <h3>SHIELD</h3>
             <div class="health-bar-wrap">
                 <div class="health-bar" id="healthBar"></div>
             </div>
@@ -53,12 +52,11 @@
             <canvas id="alienCanvas" width="160" height="160"></canvas>
         </div>
         <div id="earthWrapper">
-            <canvas id="earthCanvas" width="180" height="180"></canvas>
+            <canvas id="earthCanvas" width="200" height="200"></canvas>
             <div id="explosionRing"></div>
         </div>
     </div>
 
-    <!-- Victory particles container -->
     <div id="victoryParticles"></div>
 
     <!-- Question Box -->
@@ -84,6 +82,8 @@
     <script src="public/js/questions.js"></script>
     <script src="public/js/game.js"></script>
     <script src="public/js/ui.js"></script>
+    <script src="public/js/shield.js"></script>
+    <script src="public/js/laser.js"></script>
     <script src="public/js/3d.js"></script>
     <script src="public/js/main.js"></script>
 </body>

@@ -27,6 +27,9 @@ function startGame(difficulty) {
     else timeLeft = 10;
     window._baseTime = timeLeft;
 
+    // Init shield
+    initShield();
+
     loadQuestion();
     startTimer();
 }
@@ -55,12 +58,13 @@ function updateTimerUI() {
 
 function takeDamage() {
     health = Math.max(0, health - 20);
+    hitShield(20);
     updateHUD();
     if (health <= 0) {
         clearInterval(timerInterval);
         answerButtons.forEach(b => b.disabled = true);
         triggerEarthDestroyed();
-        return true; // game over
+        return true;
     }
     return false;
 }
@@ -71,20 +75,22 @@ function timeUp() {
     answerButtons.forEach(b => b.disabled = true);
     answerButtons[correctAnswer].classList.add("correct");
 
-    alienLeft = Math.min(72, alienLeft + 12);
+    alienLeft = Math.min(68, alienLeft + 10);
     document.getElementById("alienShipWrapper").style.left = alienLeft + "%";
 
-    const isOver = takeDamage();
-    if (isOver) return;
-
-    triggerExplosion();
-
-    setTimeout(() => {
-        answerButtons.forEach(b => { b.disabled = false; b.classList.remove("correct", "wrong"); });
-        currentQuestion++;
-        if (currentQuestion < window.questions.length) { loadQuestion(); startTimer(); }
-        else { endGame(); }
-    }, 1800);
+    // Fire weapon then damage
+    fireWeapon(() => {
+        animateShieldImpact();
+        const isOver = takeDamage();
+        if (!isOver) {
+            setTimeout(() => {
+                answerButtons.forEach(b => { b.disabled = false; b.classList.remove("correct", "wrong"); });
+                currentQuestion++;
+                if (currentQuestion < window.questions.length) { loadQuestion(); startTimer(); }
+                else { endGame(); }
+            }, 800);
+        }
+    });
 }
 
 function checkAnswer(selectedIndex) {
@@ -110,47 +116,33 @@ function checkAnswer(selectedIndex) {
             else { endGame(); }
         }, 1800);
     } else {
-        alienLeft = Math.min(72, alienLeft + 12);
+        alienLeft = Math.min(68, alienLeft + 10);
         document.getElementById("alienShipWrapper").style.left = alienLeft + "%";
         answerButtons[selectedIndex].classList.add("wrong");
         answerButtons[correctAnswer].classList.add("correct");
         playSound("wrong");
 
-        const isOver = takeDamage();
-        if (isOver) return;
-
-        triggerExplosion();
-
-        setTimeout(() => {
-            answerButtons.forEach(b => { b.disabled = false; b.classList.remove("correct", "wrong"); });
-            currentQuestion++;
-            if (currentQuestion < window.questions.length) { loadQuestion(); startTimer(); }
-            else { endGame(); }
-        }, 1800);
+        // Fire weapon at earth
+        fireWeapon(() => {
+            animateShieldImpact();
+            const isOver = takeDamage();
+            if (!isOver) {
+                setTimeout(() => {
+                    answerButtons.forEach(b => { b.disabled = false; b.classList.remove("correct", "wrong"); });
+                    currentQuestion++;
+                    if (currentQuestion < window.questions.length) { loadQuestion(); startTimer(); }
+                    else { endGame(); }
+                }, 800);
+            }
+        });
     }
-}
-
-function triggerExplosion() {
-    setTimeout(() => {
-        const ring = document.getElementById("explosionRing");
-        ring.classList.remove("explode");
-        void ring.offsetWidth;
-        ring.classList.add("explode");
-        playSound("explosion");
-        document.getElementById("earthCanvas").style.filter = "drop-shadow(0 0 40px #ff2200) brightness(1.5)";
-        setTimeout(() => { document.getElementById("earthCanvas").style.filter = "drop-shadow(0 0 25px rgba(30,144,255,0.7))"; }, 600);
-    }, 800);
 }
 
 function triggerEarthDestroyed() {
     gameOver = true;
     playSound("explosion");
 
-    // Big explosion on earth
-    const earthWrapper = document.getElementById("earthWrapper");
     const ring = document.getElementById("explosionRing");
-
-    // Multiple explosion rings
     for (let i = 0; i < 4; i++) {
         setTimeout(() => {
             ring.classList.remove("explode");
@@ -161,32 +153,19 @@ function triggerEarthDestroyed() {
         }, i * 400);
     }
 
-    // Alien invasion overlay
     setTimeout(() => {
         const overlay = document.createElement("div");
         overlay.id = "invasionOverlay";
-        overlay.style.cssText = `
-            position:fixed; inset:0;
-            background:rgba(255,30,0,0.15);
-            z-index:50;
-            pointer-events:none;
-            animation: invasionFlash 0.5s ease-in-out 3;
-        `;
+        overlay.style.cssText = `position:fixed;inset:0;background:rgba(255,30,0,0.15);z-index:50;pointer-events:none;animation:invasionFlash 0.5s ease-in-out 3;`;
         document.body.appendChild(overlay);
-
         const style = document.createElement("style");
-        style.textContent = `@keyframes invasionFlash { 0%,100%{opacity:0} 50%{opacity:1} }`;
+        style.textContent = `@keyframes invasionFlash{0%,100%{opacity:0}50%{opacity:1}}`;
         document.head.appendChild(style);
-
         setTimeout(() => { overlay.remove(); }, 1600);
     }, 600);
 
-    // Move alien all the way to earth
-    document.getElementById("alienShipWrapper").style.left = "72%";
-
-    setTimeout(() => {
-        endGame();
-    }, 2500);
+    document.getElementById("alienShipWrapper").style.left = "68%";
+    setTimeout(() => { endGame(); }, 2500);
 }
 
 function playSound(type) {
@@ -195,7 +174,6 @@ function playSound(type) {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain); gain.connect(ctx.destination);
-
         if (type === "correct") {
             osc.frequency.setValueAtTime(523, ctx.currentTime);
             osc.frequency.setValueAtTime(659, ctx.currentTime + 0.1);
@@ -225,14 +203,12 @@ function playSound(type) {
         } else if (type === "victory") {
             const notes = [523, 659, 784, 1047];
             notes.forEach((freq, i) => {
-                const o = ctx.createOscillator();
-                const g = ctx.createGain();
+                const o = ctx.createOscillator(); const g = ctx.createGain();
                 o.connect(g); g.connect(ctx.destination);
                 o.frequency.value = freq;
                 g.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.15);
                 g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.4);
-                o.start(ctx.currentTime + i * 0.15);
-                o.stop(ctx.currentTime + i * 0.15 + 0.4);
+                o.start(ctx.currentTime + i * 0.15); o.stop(ctx.currentTime + i * 0.15 + 0.4);
             });
         }
     } catch(e) {}
@@ -240,7 +216,7 @@ function playSound(type) {
 
 function launchConfetti() {
     const container = document.getElementById("victoryParticles");
-    const colors = ["#00ffcc", "#ff00ff", "#ffff00", "#00aaff", "#ff6600", "#ffffff"];
+    const colors = ["#00ffcc","#ff00ff","#ffff00","#00aaff","#ff6600","#ffffff"];
     for (let i = 0; i < 80; i++) {
         const p = document.createElement("div");
         p.style.cssText = `position:fixed;left:${Math.random()*100}%;top:-10px;width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;background:${colors[Math.floor(Math.random()*colors.length)]};border-radius:${Math.random()>0.5?'50%':'2px'};animation:confettiFall ${2+Math.random()*3}s linear ${Math.random()*2}s forwards;z-index:999;pointer-events:none;`;
@@ -258,7 +234,6 @@ function launchConfetti() {
 async function endGame() {
     clearInterval(timerInterval);
     answerButtons.forEach(b => { b.style.display = "none"; });
-
     if (health <= 0) {
         questionElement.textContent = "💀 GAME OVER - Earth Was Destroyed";
     } else {
@@ -266,7 +241,6 @@ async function endGame() {
         playSound("victory");
         launchConfetti();
     }
-
     await saveScore(score);
     const d = document.querySelector(".answers");
     d.style.gridTemplateColumns = "1fr";
