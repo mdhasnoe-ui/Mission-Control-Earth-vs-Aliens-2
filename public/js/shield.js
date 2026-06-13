@@ -211,3 +211,83 @@ setInterval(() => {
         if (Math.random() > 0.7) drawShield();
     }
 }, 120);
+
+// =====================
+// SHIELD COLLAPSE ANIMATION
+// =====================
+function collapseShield(onComplete) {
+    const canvas = document.getElementById("shieldCanvas");
+    if (!canvas) { if (onComplete) onComplete(); return; }
+    const ctx = canvas.getContext("2d");
+    const cx = 110, cy = 110, r = 100;
+
+    let frame = 0;
+    const totalFrames = 60;
+
+    const collapseAnim = setInterval(() => {
+        frame++;
+        const t = frame / totalFrames;
+        ctx.clearRect(0, 0, 220, 220);
+
+        // Shield shrinks and breaks apart
+        const currentR = r * (1 - t * 0.3);
+        const opacity = 1 - t;
+
+        // Flickering shield ring
+        if (Math.random() > 0.3) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, currentR, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(255, ${Math.floor(100 * (1-t))}, 0, ${opacity})`;
+            ctx.lineWidth = 2 + Math.random() * 3;
+            ctx.stroke();
+        }
+
+        // Breaking pieces flying off
+        const numPieces = Math.floor(t * 20);
+        for (let i = 0; i < numPieces; i++) {
+            const angle = (i / numPieces) * Math.PI * 2 + t * 5;
+            const pieceR = currentR + t * 80 * Math.random();
+            const px = cx + pieceR * Math.cos(angle);
+            const py = cy + pieceR * Math.sin(angle);
+            const size = (1 - t) * 8 + 2;
+            ctx.beginPath();
+            ctx.rect(px - size/2, py - size/2, size, size);
+            ctx.fillStyle = `rgba(0, ${Math.floor(150*(1-t))}, 255, ${opacity * 0.8})`;
+            ctx.fill();
+        }
+
+        // Electric sparks shooting out
+        for (let i = 0; i < 5; i++) {
+            if (Math.random() > 0.5) continue;
+            const sparkAngle = Math.random() * Math.PI * 2;
+            const sparkLen = 20 + Math.random() * 40;
+            ctx.beginPath();
+            ctx.moveTo(cx + currentR * Math.cos(sparkAngle), cy + currentR * Math.sin(sparkAngle));
+            ctx.lineTo(
+                cx + (currentR + sparkLen) * Math.cos(sparkAngle + 0.2),
+                cy + (currentR + sparkLen) * Math.sin(sparkAngle + 0.2)
+            );
+            ctx.strokeStyle = `rgba(255, 255, 0, ${Math.random() * opacity})`;
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
+
+        // Cracks everywhere
+        drawCracks(ctx, cx, cy, currentR, 1);
+
+        if (frame >= totalFrames) {
+            clearInterval(collapseAnim);
+            ctx.clearRect(0, 0, 220, 220);
+
+            // Final flash
+            ctx.beginPath();
+            ctx.arc(cx, cy, r * 1.3, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(255, 100, 0, 0.4)";
+            ctx.fill();
+            setTimeout(() => {
+                ctx.clearRect(0, 0, 220, 220);
+                if (onComplete) onComplete();
+            }, 200);
+        }
+    }, 25);
+}

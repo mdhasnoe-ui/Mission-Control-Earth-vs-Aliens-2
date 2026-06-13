@@ -142,30 +142,35 @@ function triggerEarthDestroyed() {
     gameOver = true;
     playSound("explosion");
 
-    const ring = document.getElementById("explosionRing");
-    for (let i = 0; i < 4; i++) {
+    // First collapse the shield spectacularly
+    collapseShield(() => {
+        // Then explode the earth
+        const ring = document.getElementById("explosionRing");
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+                ring.classList.remove("explode");
+                void ring.offsetWidth;
+                ring.classList.add("explode");
+                playSound("explosion");
+                document.getElementById("earthCanvas").style.filter = `drop-shadow(0 0 ${40+i*20}px #ff2200) brightness(${1.5+i*0.3})`;
+            }, i * 350);
+        }
+
+        // Red invasion flash
         setTimeout(() => {
-            ring.classList.remove("explode");
-            void ring.offsetWidth;
-            ring.classList.add("explode");
-            playSound("explosion");
-            document.getElementById("earthCanvas").style.filter = `drop-shadow(0 0 ${40+i*20}px #ff2200) brightness(${1.5+i*0.3})`;
-        }, i * 400);
-    }
+            const overlay = document.createElement("div");
+            overlay.id = "invasionOverlay";
+            overlay.style.cssText = `position:fixed;inset:0;background:rgba(255,30,0,0.2);z-index:50;pointer-events:none;animation:invasionFlash 0.4s ease-in-out 4;`;
+            document.body.appendChild(overlay);
+            const style = document.createElement("style");
+            style.textContent = `@keyframes invasionFlash{0%,100%{opacity:0}50%{opacity:1}}`;
+            document.head.appendChild(style);
+            setTimeout(() => { overlay.remove(); }, 1800);
+        }, 300);
 
-    setTimeout(() => {
-        const overlay = document.createElement("div");
-        overlay.id = "invasionOverlay";
-        overlay.style.cssText = `position:fixed;inset:0;background:rgba(255,30,0,0.15);z-index:50;pointer-events:none;animation:invasionFlash 0.5s ease-in-out 3;`;
-        document.body.appendChild(overlay);
-        const style = document.createElement("style");
-        style.textContent = `@keyframes invasionFlash{0%,100%{opacity:0}50%{opacity:1}}`;
-        document.head.appendChild(style);
-        setTimeout(() => { overlay.remove(); }, 1600);
-    }, 600);
-
-    document.getElementById("alienShipWrapper").style.left = "68%";
-    setTimeout(() => { endGame(); }, 2500);
+        document.getElementById("alienShipWrapper").style.left = "68%";
+        setTimeout(() => { endGame(); }, 2800);
+    });
 }
 
 function playSound(type) {

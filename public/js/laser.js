@@ -1,195 +1,143 @@
 // =====================
-// LASER / WEAPON SYSTEM
+// WEAPON SYSTEM - Always missile on wrong answer
 // =====================
-
-function fireLaserAtEarth(onImpact) {
-    const battleScene = document.getElementById("battleScene");
-    const alienWrapper = document.getElementById("alienShipWrapper");
-    const earthWrapper = document.getElementById("earthWrapper");
-
-    const alienRect = alienWrapper.getBoundingClientRect();
-    const earthRect = earthWrapper.getBoundingClientRect();
-    const sceneRect = battleScene.getBoundingClientRect();
-
-    const startX = alienRect.right - sceneRect.left;
-    const startY = alienRect.top + alienRect.height / 2 - sceneRect.top;
-    const endX = earthRect.left - sceneRect.left;
-    const endY = earthRect.top + earthRect.height / 2 - sceneRect.top;
-
-    // Create SVG laser
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.style.cssText = `position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:20;overflow:visible;`;
-
-    // Laser beam
-    const beam = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    beam.setAttribute("x1", startX);
-    beam.setAttribute("y1", startY);
-    beam.setAttribute("x2", startX);
-    beam.setAttribute("y2", startY);
-    beam.setAttribute("stroke", "#00ff88");
-    beam.setAttribute("stroke-width", "4");
-    beam.setAttribute("stroke-linecap", "round");
-    beam.setAttribute("filter", "url(#laserGlow)");
-
-    // Glow filter
-    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-    defs.innerHTML = `
-        <filter id="laserGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="4" result="blur"/>
-            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-        </filter>`;
-    svg.appendChild(defs);
-    svg.appendChild(beam);
-    battleScene.appendChild(svg);
-
-    // Animate laser extending toward earth
-    let progress = 0;
-    const duration = 25; // frames
-    const laserAnim = setInterval(() => {
-        progress++;
-        const t = progress / duration;
-        const curX = startX + (endX - startX) * t;
-        const curY = startY + (endY - startY) * t;
-        beam.setAttribute("x2", curX);
-        beam.setAttribute("y2", curY);
-
-        // Color shift as it travels
-        const r = Math.floor(0 + t * 255);
-        const g = Math.floor(255 - t * 100);
-        beam.setAttribute("stroke", `rgb(${r},${g},0)`);
-
-        if (progress >= duration) {
-            clearInterval(laserAnim);
-
-            // Impact flash
-            beam.setAttribute("stroke", "#ffffff");
-            beam.setAttribute("stroke-width", "8");
-
-            // Impact burst at earth
-            const burst = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-            burst.setAttribute("cx", endX);
-            burst.setAttribute("cy", endY);
-            burst.setAttribute("r", "10");
-            burst.setAttribute("fill", "rgba(255,150,0,0.8)");
-            svg.appendChild(burst);
-
-            let burstFrame = 0;
-            const burstAnim = setInterval(() => {
-                burstFrame++;
-                const r2 = 10 + burstFrame * 8;
-                const op = 0.8 - burstFrame * 0.13;
-                burst.setAttribute("r", r2);
-                burst.setAttribute("fill", `rgba(255,${150-burstFrame*20},0,${op})`);
-                if (burstFrame > 6) {
-                    clearInterval(burstAnim);
-                    svg.remove();
-                    if (onImpact) onImpact();
-                }
-            }, 40);
-        }
-    }, 20);
-}
 
 function fireAlienMissile(onImpact) {
     const battleScene = document.getElementById("battleScene");
     const alienWrapper = document.getElementById("alienShipWrapper");
     const earthWrapper = document.getElementById("earthWrapper");
 
+    if (!battleScene || !alienWrapper || !earthWrapper) {
+        if (onImpact) onImpact();
+        return;
+    }
+
     const alienRect = alienWrapper.getBoundingClientRect();
     const earthRect = earthWrapper.getBoundingClientRect();
     const sceneRect = battleScene.getBoundingClientRect();
 
-    const startX = alienRect.right - sceneRect.left - 20;
+    const startX = alienRect.right - sceneRect.left - 10;
     const startY = alienRect.top + alienRect.height / 2 - sceneRect.top;
-    const endX = earthRect.left - sceneRect.left + 20;
+    const endX = earthRect.left - sceneRect.left + 30;
     const endY = earthRect.top + earthRect.height / 2 - sceneRect.top;
 
+    // Missile body
     const missile = document.createElement("div");
     missile.style.cssText = `
         position:absolute;
-        width:24px; height:8px;
+        width:28px; height:10px;
         background:linear-gradient(to right, #ff4400, #ffaa00, #ffffff);
-        border-radius:4px;
+        border-radius:5px 2px 2px 5px;
         left:${startX}px;
-        top:${startY - 4}px;
-        box-shadow: 0 0 12px #ff6600, 0 0 4px #fff;
+        top:${startY - 5}px;
+        box-shadow: 0 0 14px #ff6600, 0 0 6px #fff;
         z-index:20;
         pointer-events:none;
-        transform-origin: left center;
     `;
 
-    // Trail
+    // Flame trail
     const trail = document.createElement("div");
     trail.style.cssText = `
         position:absolute;
-        width:40px; height:4px;
-        background:linear-gradient(to left, transparent, rgba(255,100,0,0.6));
+        width:50px; height:4px;
+        background:linear-gradient(to left, transparent, rgba(255,80,0,0.8), rgba(255,200,0,0.4));
         border-radius:2px;
-        left:${startX - 40}px;
+        left:${startX - 50}px;
         top:${startY - 2}px;
         z-index:19;
         pointer-events:none;
     `;
 
+    // Smoke particles
+    const smoke = document.createElement("div");
+    smoke.style.cssText = `
+        position:absolute;
+        width:8px; height:8px;
+        background:rgba(200,200,200,0.4);
+        border-radius:50%;
+        left:${startX - 10}px;
+        top:${startY - 4}px;
+        z-index:18;
+        pointer-events:none;
+    `;
+
     battleScene.appendChild(missile);
     battleScene.appendChild(trail);
+    battleScene.appendChild(smoke);
 
     const dx = endX - startX;
     const dy = endY - startY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
     const angle = Math.atan2(dy, dx) * (180 / Math.PI);
     missile.style.transform = `rotate(${angle}deg)`;
-    trail.style.transform = `rotate(${angle}deg)`;
 
     let progress = 0;
-    const steps = 40;
+    const steps = 45;
     const missileAnim = setInterval(() => {
         progress++;
         const t = progress / steps;
-        // Arc trajectory
-        const arcY = -Math.sin(t * Math.PI) * 30;
+        const arcY = -Math.sin(t * Math.PI) * 25;
         const curX = startX + dx * t;
         const curY = startY + dy * t + arcY;
+
         missile.style.left = curX + "px";
-        missile.style.top = (curY - 4) + "px";
-        trail.style.left = (curX - 40) + "px";
+        missile.style.top = (curY - 5) + "px";
+        trail.style.left = (curX - 50) + "px";
         trail.style.top = (curY - 2) + "px";
+        smoke.style.left = (curX - 15) + "px";
+        smoke.style.top = (curY - 4 + Math.random() * 4 - 2) + "px";
+        smoke.style.opacity = 0.3 + Math.random() * 0.3;
+
+        // Rotate missile to follow arc
+        const currentAngle = Math.atan2(dy + arcY * Math.cos(t * Math.PI) * Math.PI, dx) * (180 / Math.PI);
+        missile.style.transform = `rotate(${currentAngle}deg)`;
 
         if (progress >= steps) {
             clearInterval(missileAnim);
-            missile.remove();
-            trail.remove();
+            missile.remove(); trail.remove(); smoke.remove();
 
-            // Explosion
+            // Big explosion at earth
             const exp = document.createElement("div");
             exp.style.cssText = `
                 position:absolute;
-                left:${endX - 30}px; top:${endY - 30}px;
-                width:60px; height:60px;
+                left:${endX - 40}px; top:${endY - 40}px;
+                width:80px; height:80px;
                 border-radius:50%;
-                background:radial-gradient(circle, #fff 0%, #ffaa00 40%, #ff4400 70%, transparent 100%);
-                z-index:21; pointer-events:none;
-                animation: explodeBurst 0.5s ease-out forwards;
+                background:radial-gradient(circle, #ffffff 0%, #ffdd00 25%, #ff6600 55%, #ff2200 75%, transparent 100%);
+                z-index:25; pointer-events:none;
+                animation: missileExplode 0.6s ease-out forwards;
             `;
-            battleScene.appendChild(exp);
 
-            if (!document.getElementById("burstStyle")) {
+            // Shockwave ring
+            const shockwave = document.createElement("div");
+            shockwave.style.cssText = `
+                position:absolute;
+                left:${endX - 10}px; top:${endY - 10}px;
+                width:20px; height:20px;
+                border: 3px solid rgba(255,150,0,0.9);
+                border-radius:50%;
+                z-index:24; pointer-events:none;
+                animation: shockwaveExpand 0.5s ease-out forwards;
+            `;
+
+            battleScene.appendChild(exp);
+            battleScene.appendChild(shockwave);
+
+            if (!document.getElementById("missileStyle")) {
                 const style = document.createElement("style");
-                style.id = "burstStyle";
-                style.textContent = `@keyframes explodeBurst{0%{transform:scale(0);opacity:1}100%{transform:scale(2.5);opacity:0}}`;
+                style.id = "missileStyle";
+                style.textContent = `
+                    @keyframes missileExplode{0%{transform:scale(0);opacity:1}60%{transform:scale(2.2);opacity:0.8}100%{transform:scale(3);opacity:0}}
+                    @keyframes shockwaveExpand{0%{transform:scale(1);opacity:1}100%{transform:scale(8);opacity:0}}
+                `;
                 document.head.appendChild(style);
             }
 
-            setTimeout(() => { exp.remove(); if (onImpact) onImpact(); }, 500);
+            setTimeout(() => { exp.remove(); shockwave.remove(); if (onImpact) onImpact(); }, 600);
         }
-    }, 18);
+    }, 16);
 }
 
-// Randomly choose between laser and missile
+// Always fire missile
 function fireWeapon(onImpact) {
-    if (Math.random() > 0.5) {
-        fireLaserAtEarth(onImpact);
-    } else {
-        fireAlienMissile(onImpact);
-    }
+    fireAlienMissile(onImpact);
 }
