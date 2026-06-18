@@ -11,6 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
+
     <canvas id="bgCanvas"></canvas>
 
     <!-- Difficulty Screen -->
@@ -46,38 +47,49 @@
         </div>
     </header>
 
-    <!-- Battle Scene -->
-    <div class="battle-scene" id="battleScene" style="display:none">
-        <div id="alienShipWrapper">
-            <canvas id="alienCanvas" width="160" height="160"></canvas>
-        </div>
-        <div id="earthWrapper">
-            <canvas id="earthCanvas" width="200" height="200"></canvas>
-            <div id="explosionRing"></div>
-        </div>
-    </div>
+    <!-- Game Area -->
+    <div class="game-area" id="gameArea" style="display:none">
 
-    <div id="victoryParticles"></div>
+        <!-- Alien Ship - fixed top left -->
+        <div id="alienShipWrapper" class="alien-ship-corner">
+            <canvas id="alienCanvas" width="200" height="200"></canvas>
+        </div>
 
-    <!-- Question Box -->
-    <div class="question-area" id="questionArea" style="display:none">
-        <div class="question-box">
-            <div class="question-header">
-                <span class="question-number" id="questionNum">01 / 08</span>
-                <div class="timer-wrap">
-                    <div class="timer-bar" id="timerBar"></div>
-                    <span class="timer-text" id="timerText">15</span>
+        <!-- Question Box - center -->
+        <div class="question-area" id="questionArea">
+            <div class="question-box">
+                <div class="question-header">
+                    <span class="question-number" id="questionNum">01 / 08</span>
+                    <div class="timer-wrap">
+                        <div class="timer-bar" id="timerBar"></div>
+                        <span class="timer-text" id="timerText">15</span>
+                    </div>
+                </div>
+                <h2 id="question">Loading...</h2>
+                <div class="answers">
+                    <button class="answer-btn">A</button>
+                    <button class="answer-btn">B</button>
+                    <button class="answer-btn">C</button>
+                    <button class="answer-btn">D</button>
                 </div>
             </div>
-            <h2 id="question">Loading...</h2>
-            <div class="answers">
-                <button class="answer-btn">A</button>
-                <button class="answer-btn">B</button>
-                <button class="answer-btn">C</button>
-                <button class="answer-btn">D</button>
-            </div>
         </div>
+
+        <!-- Earth - fixed bottom right, partially cropped -->
+        <div id="earthWrapper" class="earth-corner">
+            <canvas id="earthCanvas" width="380" height="380"></canvas>
+            <div id="explosionRing"></div>
+        </div>
+
     </div>
+
+    <!-- Missile layer (full screen overlay for missile path) -->
+    <div id="missileLayer"></div>
+
+    <!-- Alien invasion layer -->
+    <div id="invasionLayer"></div>
+
+    <div id="victoryParticles"></div>
 
     <script src="public/js/questions.js"></script>
     <script src="public/js/game.js"></script>

@@ -5,39 +5,45 @@
     const canvas = document.getElementById("bgCanvas");
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    canvas.style.position = "fixed";
-    canvas.style.top = "0";
-    canvas.style.left = "0";
-    canvas.style.zIndex = "-1";
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 5;
 
     const starGeo = new THREE.BufferGeometry();
-    const starCount = 2000;
+    const starCount = 2500;
     const positions = new Float32Array(starCount * 3);
     for (let i = 0; i < starCount * 3; i++) positions[i] = (Math.random() - 0.5) * 200;
     starGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.3, transparent: true, opacity: 0.8 });
-    const stars = new THREE.Points(starGeo, starMat);
+    const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.25, transparent: true, opacity: 0.85 }));
     scene.add(stars);
 
-    const shootingStars = [];
-    function createShootingStar() {
+    // Shooting stars
+    setInterval(() => {
         const geo = new THREE.BufferGeometry();
-        const verts = new Float32Array([0,0,0, -3,-0.5,0]);
+        const verts = new Float32Array([0,0,0,-4,-0.5,0]);
         geo.setAttribute("position", new THREE.BufferAttribute(verts, 3));
-        const mat = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.8 });
-        const line = new THREE.Line(geo, mat);
-        line.position.set((Math.random() - 0.5) * 100, (Math.random() - 0.5) * 60, -10);
-        line.rotation.z = -0.3;
+        const line = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.7 }));
+        line.position.set((Math.random()-0.5)*100, (Math.random()-0.5)*60, -10);
         line.userData.speed = 1.5 + Math.random();
         scene.add(line);
-        shootingStars.push(line);
-        setTimeout(() => { scene.remove(line); shootingStars.splice(shootingStars.indexOf(line), 1); }, 1500);
-    }
-    setInterval(createShootingStar, 2000);
+        setTimeout(() => scene.remove(line), 1500);
+    }, 2500);
+
+    // Background planets
+    const planets = [
+        { size: 50, x: 12, y: 22, color1: "#c84b31", color2: "#8b2500" },
+        { size: 38, x: 78, y: 12, color1: "#e8c57a", color2: "#c4972e" },
+        { size: 28, x: 5, y: 68, color1: "#f0a500", color2: "#c97d1a" },
+    ];
+    planets.forEach(p => {
+        const div = document.createElement("div");
+        div.style.cssText = `position:fixed;width:${p.size}px;height:${p.size}px;left:${p.x}%;top:${p.y}%;border-radius:50%;background:radial-gradient(circle at 35% 35%,${p.color1},${p.color2});opacity:0.4;z-index:1;pointer-events:none;box-shadow:0 0 ${p.size/2}px ${p.color1}33;animation:pfloat${p.size} 8s ease-in-out infinite;`;
+        document.body.appendChild(div);
+        const s = document.createElement("style");
+        s.textContent = `@keyframes pfloat${p.size}{0%,100%{transform:translateY(0)}50%{transform:translateY(8px)}}`;
+        document.head.appendChild(s);
+    });
 
     window.addEventListener("resize", () => {
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -47,86 +53,99 @@
 
     function animate() {
         requestAnimationFrame(animate);
-        stars.rotation.y += 0.0003;
-        stars.rotation.x += 0.0001;
-        shootingStars.forEach(s => { s.position.x += s.userData.speed; s.position.y -= s.userData.speed * 0.3; });
+        stars.rotation.y += 0.0002;
+        stars.rotation.x += 0.00008;
         renderer.render(scene, camera);
     }
     animate();
 })();
 
 // =====================
-// BACKGROUND PLANETS
-// =====================
-(function initBgPlanets() {
-    const planets = [
-        { size: 60, x: 8, y: 20, color1: "#c84b31", color2: "#8b2500", name: "mars" },
-        { size: 45, x: 85, y: 15, color1: "#e8c57a", color2: "#c4972e", name: "saturn" },
-        { size: 35, x: 92, y: 65, color1: "#7fb3d3", color2: "#2e86ab", name: "neptune" },
-        { size: 28, x: 5, y: 75, color1: "#f0a500", color2: "#c97d1a", name: "jupitermini" },
-    ];
-    planets.forEach(p => {
-        const div = document.createElement("div");
-        div.style.cssText = `position:fixed;width:${p.size}px;height:${p.size}px;left:${p.x}%;top:${p.y}%;border-radius:50%;background:radial-gradient(circle at 35% 35%,${p.color1},${p.color2});opacity:0.5;z-index:0;pointer-events:none;box-shadow:0 0 ${p.size/2}px ${p.color1}44;`;
-        if (p.name === "saturn") div.style.boxShadow += `,0 0 0 8px ${p.color1}33,0 0 0 14px ${p.color1}22`;
-        document.body.appendChild(div);
-        const style = document.createElement("style");
-        style.textContent = `@keyframes pf${p.name}{0%,100%{transform:translateY(0px)}50%{transform:translateY(8px)}}`;
-        div.style.animation = `pf${p.name} 7s ease-in-out infinite`;
-        document.head.appendChild(style);
-    });
-})();
-
-// =====================
-// 3D EARTH
+// 3D EARTH (large, bottom right)
 // =====================
 (function initEarth() {
     const canvas = document.getElementById("earthCanvas");
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-    renderer.setSize(220, 220);
+    renderer.setSize(380, 380);
+
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-    camera.position.z = 3;
+    camera.position.z = 2.8;
 
-    scene.add(new THREE.AmbientLight(0x333333));
-    const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+    scene.add(new THREE.AmbientLight(0x334466));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.3);
     sun.position.set(5, 3, 5);
     scene.add(sun);
+    const rimLight = new THREE.DirectionalLight(0x4488ff, 0.4);
+    rimLight.position.set(-5, -2, -3);
+    scene.add(rimLight);
 
+    // Earth texture
     const texCanvas = document.createElement("canvas");
-    texCanvas.width = 512; texCanvas.height = 256;
+    texCanvas.width = 1024; texCanvas.height = 512;
     const ctx = texCanvas.getContext("2d");
-    const oceanGrad = ctx.createLinearGradient(0, 0, 0, 256);
-    oceanGrad.addColorStop(0, "#1a6b8a");
-    oceanGrad.addColorStop(0.5, "#0d4f6e");
-    oceanGrad.addColorStop(1, "#1a6b8a");
-    ctx.fillStyle = oceanGrad;
-    ctx.fillRect(0, 0, 512, 256);
+
+    // Ocean gradient
+    const og = ctx.createLinearGradient(0,0,0,512);
+    og.addColorStop(0, "#1a5f7a"); og.addColorStop(0.5, "#0d4a65"); og.addColorStop(1, "#1a5f7a");
+    ctx.fillStyle = og; ctx.fillRect(0,0,1024,512);
+
+    // Continents
     ctx.fillStyle = "#2d7a3a";
-    [[120,90,55,45,-0.3],[145,160,30,50,0.2],[260,100,35,30,0],[265,165,30,55,0.1],[370,80,80,50,-0.1],[400,175,30,22,0]].forEach(([x,y,rx,ry,r]) => { ctx.beginPath(); ctx.ellipse(x,y,rx,ry,r,0,Math.PI*2); ctx.fill(); });
+    const continents = [
+        [200,170,100,85,-0.3], [280,320,60,95,0.2],
+        [510,190,70,55,0], [520,320,60,105,0.1],
+        [700,160,150,95,-0.1], [780,340,60,42,0],
+        [90,200,55,40,0.2], [950,250,45,35,0.1]
+    ];
+    continents.forEach(([x,y,rx,ry,r]) => {
+        ctx.beginPath(); ctx.ellipse(x,y,rx,ry,r,0,Math.PI*2); ctx.fill();
+    });
+
+    // Ice caps
     ctx.fillStyle = "#e8f4f8";
-    ctx.beginPath(); ctx.ellipse(256,10,200,20,0,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(256,246,200,20,0,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle = "rgba(255,255,255,0.4)";
-    for (let i = 0; i < 20; i++) { ctx.beginPath(); ctx.ellipse(Math.random()*512,Math.random()*256,30+Math.random()*40,10+Math.random()*15,Math.random(),0,Math.PI*2); ctx.fill(); }
+    ctx.beginPath(); ctx.ellipse(512,18,400,22,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(512,494,400,22,0,0,Math.PI*2); ctx.fill();
+
+    // Desert areas
+    ctx.fillStyle = "#c4a35a";
+    ctx.beginPath(); ctx.ellipse(520,260,40,20,0.1,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(620,300,30,15,0,0,Math.PI*2); ctx.fill();
 
     const earthTex = new THREE.CanvasTexture(texCanvas);
-    const earth = new THREE.Mesh(new THREE.SphereGeometry(1,64,64), new THREE.MeshPhongMaterial({ map: earthTex, specular: new THREE.Color(0x4488aa), shininess: 25 }));
+    const earth = new THREE.Mesh(
+        new THREE.SphereGeometry(1, 64, 64),
+        new THREE.MeshPhongMaterial({ map: earthTex, specular: new THREE.Color(0x224466), shininess: 20 })
+    );
     scene.add(earth);
-    scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.06,64,64), new THREE.MeshPhongMaterial({ color: 0x4488ff, transparent: true, opacity: 0.12 })));
 
-    const cloudTexCanvas = document.createElement("canvas");
-    cloudTexCanvas.width = 512; cloudTexCanvas.height = 256;
-    const cctx = cloudTexCanvas.getContext("2d");
-    cctx.fillStyle = "rgba(255,255,255,0.6)";
-    for (let i = 0; i < 30; i++) { cctx.beginPath(); cctx.ellipse(Math.random()*512,Math.random()*256,20+Math.random()*50,8+Math.random()*12,Math.random(),0,Math.PI*2); cctx.fill(); }
-    const clouds = new THREE.Mesh(new THREE.SphereGeometry(1.02,64,64), new THREE.MeshPhongMaterial({ map: new THREE.CanvasTexture(cloudTexCanvas), transparent: true, opacity: 0.5 }));
+    // Atmosphere
+    scene.add(new THREE.Mesh(
+        new THREE.SphereGeometry(1.05, 64, 64),
+        new THREE.MeshPhongMaterial({ color: 0x3366ff, transparent: true, opacity: 0.1, side: THREE.FrontSide })
+    ));
+
+    // Cloud layer
+    const cloudCanvas = document.createElement("canvas");
+    cloudCanvas.width = 1024; cloudCanvas.height = 512;
+    const cctx = cloudCanvas.getContext("2d");
+    cctx.fillStyle = "rgba(255,255,255,0.55)";
+    for (let i = 0; i < 60; i++) {
+        cctx.beginPath();
+        cctx.ellipse(Math.random()*1024, Math.random()*512, 25+Math.random()*70, 10+Math.random()*18, Math.random(), 0, Math.PI*2);
+        cctx.fill();
+    }
+    const clouds = new THREE.Mesh(
+        new THREE.SphereGeometry(1.02, 64, 64),
+        new THREE.MeshPhongMaterial({ map: new THREE.CanvasTexture(cloudCanvas), transparent: true, opacity: 0.45 })
+    );
     scene.add(clouds);
 
+    // Expose shake
     window.shakeEarth = function() {
         let t = 0;
         const shake = setInterval(() => {
-            earth.position.x = Math.sin(t * 30) * 0.15;
+            earth.position.x = Math.sin(t*30)*0.12;
             clouds.position.x = earth.position.x;
             t += 0.05;
             if (t > 0.6) { earth.position.x = 0; clouds.position.x = 0; clearInterval(shake); }
@@ -135,77 +154,99 @@
 
     function animate() {
         requestAnimationFrame(animate);
-        earth.rotation.y += 0.004;
-        clouds.rotation.y += 0.005;
+        earth.rotation.y += 0.003;
+        clouds.rotation.y += 0.0035;
         renderer.render(scene, camera);
     }
     animate();
 })();
 
 // =====================
-// 3D ALIEN SHIP
+// 3D ALIEN SHIP (evil, top left)
 // =====================
 (function initAlienShip() {
     const canvas = document.getElementById("alienCanvas");
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-    renderer.setSize(220, 220);
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-    camera.position.z = 5;
+    renderer.setSize(200, 200);
 
-    scene.add(new THREE.AmbientLight(0x222222));
-    const light1 = new THREE.DirectionalLight(0x00ffcc, 1.5);
-    light1.position.set(5, 5, 5);
-    scene.add(light1);
-    const light2 = new THREE.PointLight(0xff00ff, 1, 10);
-    light2.position.set(-3, -2, 2);
-    scene.add(light2);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+    camera.position.set(0, 0.5, 5);
+    camera.lookAt(0, 0, 0);
+
+    scene.add(new THREE.AmbientLight(0x110022));
+    const redLight = new THREE.PointLight(0xff2200, 2, 8);
+    redLight.position.set(2, 2, 2);
+    scene.add(redLight);
+    const purpleLight = new THREE.PointLight(0x6600ff, 1.5, 6);
+    purpleLight.position.set(-2, -1, 1);
+    scene.add(purpleLight);
 
     const ship = new THREE.Group();
-    const bodyGeo = new THREE.SphereGeometry(1.2, 32, 16);
-    bodyGeo.scale(1, 0.35, 1);
-    ship.add(new THREE.Mesh(bodyGeo, new THREE.MeshPhongMaterial({ color: 0x334455, specular: 0x00ffcc, shininess: 80, emissive: 0x001122 })));
 
-    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.55,32,16,0,Math.PI*2,0,Math.PI/2), new THREE.MeshPhongMaterial({ color: 0x00ffcc, transparent: true, opacity: 0.7, specular: 0xffffff, shininess: 150, emissive: 0x004433 }));
-    dome.position.y = 0.35;
-    ship.add(dome);
-    ship.add(new THREE.Mesh(new THREE.TorusGeometry(1.2,0.1,8,32), new THREE.MeshPhongMaterial({ color: 0x00ffcc, emissive: 0x004433, shininess: 100 })));
+    // Main dark body - angular/aggressive
+    const bodyGeo = new THREE.SphereGeometry(1.1, 8, 6); // low poly = angular
+    bodyGeo.scale(1, 0.28, 1);
+    ship.add(new THREE.Mesh(bodyGeo, new THREE.MeshPhongMaterial({
+        color: 0x1a0a0a, specular: 0xff2200, shininess: 60, emissive: 0x220000
+    })));
 
-    for (let i = 0; i < 8; i++) {
-        const angle = (i / 8) * Math.PI * 2;
-        const lightSphere = new THREE.Mesh(new THREE.SphereGeometry(0.08,8,8), new THREE.MeshBasicMaterial({ color: i % 2 === 0 ? 0x00ffff : 0xff00ff }));
-        lightSphere.position.set(Math.cos(angle)*1.2, -0.1, Math.sin(angle)*1.2);
-        ship.add(lightSphere);
+    // Evil spikes/protrusions
+    for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2;
+        const spike = new THREE.Mesh(
+            new THREE.ConeGeometry(0.08, 0.4, 4),
+            new THREE.MeshPhongMaterial({ color: 0x330000, emissive: 0xff0000, emissiveIntensity: 0.3 })
+        );
+        spike.position.set(Math.cos(angle) * 1.0, 0, Math.sin(angle) * 1.0);
+        spike.rotation.z = Math.PI / 2;
+        spike.rotation.y = angle;
+        ship.add(spike);
     }
 
-    const glow = new THREE.Mesh(new THREE.CylinderGeometry(0.4,0.6,0.1,16), new THREE.MeshBasicMaterial({ color: 0x00ffcc, transparent: true, opacity: 0.5 }));
-    glow.position.y = -0.25;
+    // Dark dome (red tinted)
+    const dome = new THREE.Mesh(
+        new THREE.SphereGeometry(0.45, 16, 8, 0, Math.PI*2, 0, Math.PI/2),
+        new THREE.MeshPhongMaterial({ color: 0x330000, transparent: true, opacity: 0.85, specular: 0xff4400, shininess: 100, emissive: 0x220000 })
+    );
+    dome.position.y = 0.28;
+    ship.add(dome);
+
+    // Rim - dark red glowing
+    ship.add(new THREE.Mesh(
+        new THREE.TorusGeometry(1.1, 0.09, 8, 32),
+        new THREE.MeshPhongMaterial({ color: 0xff2200, emissive: 0xaa0000, shininess: 80 })
+    ));
+
+    // Evil red lights
+    for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2;
+        const l = new THREE.Mesh(
+            new THREE.SphereGeometry(0.07, 6, 6),
+            new THREE.MeshBasicMaterial({ color: 0xff0000 })
+        );
+        l.position.set(Math.cos(angle)*1.1, -0.08, Math.sin(angle)*1.1);
+        ship.add(l);
+    }
+
+    // Engine glow (red/orange)
+    const glow = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.35, 0.5, 0.08, 16),
+        new THREE.MeshBasicMaterial({ color: 0xff3300, transparent: true, opacity: 0.6 })
+    );
+    glow.position.y = -0.2;
     ship.add(glow);
 
-    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.3,2,8), new THREE.MeshBasicMaterial({ color: 0x00ff88, transparent: true, opacity: 0 }));
-    beam.position.y = -1.2;
-    ship.add(beam);
-
     scene.add(ship);
-
-    // X movement: positive = right (toward earth), negative = left (away from earth)
-    window.alienShipX = 0;
-    window.moveAlienShip = function(direction) {
-        window.alienShipX += direction * 0.5;
-        if (direction > 0) {
-            beam.material.opacity = 0.6;
-            setTimeout(() => { beam.material.opacity = 0; }, 800);
-        }
-    };
 
     let time = 0;
     function animate() {
         requestAnimationFrame(animate);
         time += 0.02;
-        ship.position.x = window.alienShipX;
-        ship.position.y = Math.sin(time) * 0.15;
-        ship.rotation.y += 0.01;
-        glow.material.opacity = 0.3 + Math.sin(time * 4) * 0.2;
+        ship.rotation.y += 0.008;
+        ship.position.y = Math.sin(time * 0.8) * 0.1;
+        glow.material.opacity = 0.4 + Math.sin(time*3)*0.2;
+        redLight.intensity = 1.5 + Math.sin(time*2)*0.5;
         renderer.render(scene, camera);
     }
     animate();
